@@ -1,0 +1,12 @@
+line comment (excluding trailing newline): //[^\n]*
+line comment (including trailing newline): //[^\n]*\n?
+block comment (unnested): /\*([^*]|\*+[^*/])*\*+/
+identifier (UAX#31): \p{XID_Start}\p{XID_Continue}*
+identifier (Rust): [\p{XID_Start}_]\p{XID_Continue}*
+identifier (traditional ASCII): [_a-zA-Z][_0-9a-zA-Z]*
+binary integer: 0b_*[01][_01]*
+octal integer 0o_*[0-7][_0-7]*
+decimal integer: [1-9][_1-9]*
+decimal float: (?&digits)(?:e(?&digits)|\.(?&digits)(?:e(?&digits))?)
+string (minimal escapes): "(?:[^"]|\\")*"
+
