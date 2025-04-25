@@ -18,16 +18,16 @@ impl Parser {
         self.tokens.get(self.pos)
     }
 
-    pub fn advance(&self) -> Option<&Token> {
+    pub fn advance(&mut self) -> Option<&Token> {
         let wrapped_token = self.tokens.get(self.pos);
         self.pos += 1;
         wrapped_token
     }
 
-    pub fn expect(&self, expected: Token) -> Result<(), String>{
+    pub fn expect(&mut self, expected: TokenType) -> Result<(), String>{
         match self.advance() {
             Some(token) => {
-                if token == expected {
+                if token.kind == expected {
                     return Ok();
                 }else{
                     return String::from("Token not matched!");
