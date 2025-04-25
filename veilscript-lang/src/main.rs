@@ -2,8 +2,9 @@ mod lexer;
 
 fn main() {
     let source = r#"
-    func greet() -> void {
+    func greet() -> string {
         message = "my balls itch";
+        return message;
     }
     "#;
 
