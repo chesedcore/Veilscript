@@ -1,7 +1,7 @@
 use logos::Logos;
 
 #[allow(non_camel_case_types)]
-#[derive(Logos, Debug, PartialEq)]
+#[derive(Logos, Debug, PartialEq, Clone)]
 pub enum TokenType {
     //keywords
     #[token("func")]
@@ -55,6 +55,19 @@ pub enum TokenType {
     #[token("}")]
     RBRACE,
 
+    #[token("+")]
+    PLUS,
+
+    #[token("-")]
+    MINUS,
+
+    #[token("/")]
+    SLASH,
+
+    #[token("*")]
+    ASTERISK,
+
+
     //literals
     #[regex(r#""([^"\\]|\\.)*""#)]
     LITERAL_STRING,
@@ -77,22 +90,26 @@ pub enum TokenType {
     //fallback
     #[regex(r".", priority=0)]
     ERROR,
+    
+    //last reached
+    EOF
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token<'src> {
     pub lexeme: &'src str,
-    pub kind: Result<TokenType, ()>,
+    pub kind: TokenType,
 }
 
 pub fn tokenise(source_string: &str) -> Vec<Token> {
     let mut result_vector= Vec::<Token>::new();
     let mut lexer = TokenType::lexer(source_string);
 
-    while let Some(kind) = lexer.next() {
+    while let Some(Ok(kind)) = lexer.next() {
         let lexeme = lexer.slice();
         result_vector.push( Token{lexeme, kind} );
     }
+    result_vector.push( Token{lexeme:"--END-OF-FILE--", kind:TokenType::EOF});
     result_vector
 }
 

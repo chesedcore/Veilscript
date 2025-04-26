@@ -1,13 +1,14 @@
+use crate::lexer::TokenType;
 use crate::lexer::Token;
 use crate::ast::*;
 
-pub struct Parser {
-    pub tokens: Vec<Token>,
+pub struct Parser<'a> {
+    pub tokens: Vec<Token<'a>>,
     pub pos: usize
 }
 
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser { 
             tokens, 
             pos: 0
@@ -24,10 +25,10 @@ impl Parser {
         wrapped_token
     }
 
-    pub fn expect(&mut self, expected: TokenType) -> Result<(), String>{
+    /*pub fn expect(&mut self, expected: TokenType) -> Result<(), String>{
         match self.advance() {
             Some(token) => {
-                if token.kind == expected {
+                if token.kind == expected{
                     Ok(())
                 }else{
                     Err(format!("Expected {:?}, but found {:?}", expected, token.kind))
@@ -36,7 +37,7 @@ impl Parser {
 
             _ => Err("Nothing found... probably reached EOF?".to_string())
         }
-    }
+    }*/
 
     ///general parsing functions
 
@@ -47,12 +48,12 @@ impl Parser {
 
             None => Err("Unexpected end of input... eh, EOF, probably?".to_string()),
             Some(token) => {
-                //token: &Token { &lexeme: &str , &kind: &Result<TokenType, String> }
+                //token: &Token { &lexeme: &str , &kind: &TokenType }
                 //this is where i parse all the "primary" types 
                 match &token.kind {
 
                     //parse INTEGERS
-                    Ok(TokenType::LITERAL_INT) => {
+                    TokenType::LITERAL_INT => {
                         let lexeme = token.lexeme;
                         let parsed_value = lexeme.parse::<i64>()
                             .map_err(|_| "Invalid int! Too big for an i64, perhaps?".to_string())?;
@@ -61,7 +62,7 @@ impl Parser {
                     },
 
                     //parse FLOATS
-                    Ok(TokenType::LITERAL_FLOAT) => {
+                    TokenType::LITERAL_FLOAT => {
                         let lexeme = token.lexeme;
                         let parsed_value = lexeme.parse::<f64>()
                             .map_err(|_| "Invalid float! Too wonky for an f64, perhaps?".to_string())?;
@@ -70,7 +71,7 @@ impl Parser {
                     },
 
                     //parse STRINGS
-                    Ok(TokenType::LITERAL_STRING) => {
+                    TokenType::LITERAL_STRING => {
                         let lexeme = token.lexeme;
                         let parsed_value = lexeme.to_owned();
                         self.advance();
@@ -78,7 +79,7 @@ impl Parser {
                     },
                     
                     //parse IDENTIFIERS
-                    Ok(TokenType::IDENTIFIER) => {
+                    TokenType::IDENTIFIER => {
                         let lexeme = token.lexeme;
                         let parsed_value = lexeme.to_owned();
                         self.advance();
@@ -89,8 +90,48 @@ impl Parser {
                 }
             }
         }
+    }
 
+    fn parse_atom_into_expr(&mut self) -> Result<Expr, String> {
+        let atom = self.parse_atom()?;
+        Ok(Expr::ATOM(atom))
+    }
+
+    pub fn parse_expr(&mut self, current_precedence: u8) -> Result<Expr, String> {
+        let mut left = self.parse_atom_into_expr()?;
+
+        loop {
+            let next_token = match self.peek(){
+                Some(token) => token,
+                None => return Err("Failed to unwrap next token...EOF?".to_string()),
+            };
+
+            let next_token_type =  &next_token.kind;
+            
+            let operator = match next_token_type {
+                TokenType::PLUS => BinOp::ADD,
+                TokenType::MINUS => BinOp::SUB,
+                TokenType::SLASH => BinOp::DIV,
+                TokenType::ASTERISK => BinOp::MULT,
+                _ => break,
+            };
+
+            let precedence = operator.get_precedence();
+            if precedence < current_precedence {
+                break; //stop building
+            }
+
+            self.advance(); //look at the token on the right
+            let right = self.parse_expr(precedence+1)?; //recurse lol
+
+            left = Expr::BINARY_OP {
+                left: Box::new(left),
+                opcode: operator,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(left)
     }
 }
-
 
