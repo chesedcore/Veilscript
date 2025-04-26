@@ -7,7 +7,8 @@ use parser::Parser;
 
 fn main() {
     let source = r#"
-    3 + 2*5 + 8*4 /3
+    3 + 2*5 + 8*4 /3@
+    //              ^ remove this @ to make code function properly
     "#;
 
     //trial run

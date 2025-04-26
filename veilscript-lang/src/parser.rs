@@ -113,7 +113,8 @@ impl<'a> Parser<'a> {
                 TokenType::MINUS => BinOp::SUB,
                 TokenType::SLASH => BinOp::DIV,
                 TokenType::ASTERISK => BinOp::MULT,
-                _ => break,
+                TokenType::EOF => break,
+                _ => return Err(format!("Invalid token type detected: {:?} Fix your shit, dumbass.", next_token)),
             };
 
             let precedence = operator.get_precedence();
