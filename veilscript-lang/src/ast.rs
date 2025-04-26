@@ -1,29 +1,30 @@
-#[derive(Debug)]
-pub struct Assignment {
-    pub name: String,
-    pub expr: Expr,
-}
+#![allow(non_camel_case_types)]
 
 #[derive(Debug)]
-pub struct Variable {
+pub struct Ident {
     pub name: String
 }
 
 #[derive(Debug)]
 pub enum BinOp {
-    add,
-    sub,
-    mult,
-    div
+    ADD,
+    SUB,
+    MULT,
+    DIV,
+}
+
+#[derive(Debug)]
+pub enum Atom {
+    LITERAL_FLOAT(f64),
+    LITERAL_INT(i64),
+    LITERAL_STRING(String),
+    IDENTIFIER(Ident),
 }
 
 #[derive(Debug)]
 pub enum Expr {
-    FloatLiteral(f64),
-    IntLiteral(i64),
-    StringLiteral(String),
-    Variable(Variable),
-    BinaryExpr{
+    ATOM(Atom),
+    BINARY_OP {
         left: Box<Expr>,
         opcode: BinOp,
         right: Box<Expr>,
@@ -32,7 +33,6 @@ pub enum Expr {
 
 #[derive(Debug)]
 pub enum Ast {
-    AssignmentNode(Assignment),
-    ExpressionNode(Expr),
+    NODE_EXPRESSION(Expr),
 }
 
