@@ -40,6 +40,22 @@ impl BinOp {
     }
 }
 
+#[derive(Debug)]
+pub enum MonOp {
+    POS,
+    NEG
+}
+
+impl MonOp {
+    pub fn get_precedence(&self) -> u8 {3}
+    pub fn to_string(&self) -> String {
+        match self {
+            MonOp::POS => "+".to_string(),
+            MonOp::NEG => "-".to_string(),
+        }
+    }
+}
+
 
 //this here is an ATOM enum. It represents the smallest, most indivisible part of the source, and is
 //comprised of a LITERAL (like strings or floats) or an IDENTIFIER(like a variable or function name)
@@ -72,6 +88,10 @@ pub enum Expr {
         left: Box<Expr>,
         opcode: BinOp,
         right: Box<Expr>,
+    },
+    UNARY_EXPR {
+        opcode: MonOp,
+        expr: Box<Expr>
     }
 }
 
@@ -94,7 +114,8 @@ impl Expr {
                     right.to_pretty_string()
                 )
             }
-            Expr::GROUPED_EXPR(inner) => format!("({})", inner.to_pretty_string()), 
+            Expr::GROUPED_EXPR(inner) => format!("({})", inner.to_pretty_string()),
+            Expr::UNARY_EXPR{opcode,expr} => format!("({}{})",opcode.to_string(),expr.to_pretty_string()),
         }
     }
 }

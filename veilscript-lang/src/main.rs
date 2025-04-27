@@ -7,7 +7,7 @@ use parser::Parser;
 
 fn main() {
     let source = r#"
-    -7 + 3
+    - 7 + -+3
     "#;
 
     //trial run

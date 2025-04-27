@@ -92,7 +92,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_grouped_expr(&mut self) -> Result<Expr, String> { //parses brackets properly
+    pub fn parse_group_or_atom(&mut self) -> Result<Expr, String> { //parses brackets properly
 
         //look into the next token...
         match self.peek() {
@@ -131,8 +131,41 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn parse_unary_expr(&mut self) -> Result<Expr, String> {
+
+        let token = match self.peek() {
+            Some(t) => t,
+            None => return Err("Unexpected end of input!".to_string()),
+        }; //grab a valid token
+
+        match token.kind { 
+            TokenType::PLUS | TokenType::MINUS => {
+                let op = if token.kind == TokenType::PLUS {MonOp::POS} else {MonOp::NEG};
+                self.advance(); //move past the unary
+
+                //grab the next expr 
+                let expr = self.parse_expr(op.get_precedence()+1)?;
+                Ok(Expr::UNARY_EXPR{
+                    opcode: op,
+                    expr: Box::new(expr)
+                })
+            },
+
+            _ => Err("Not a valid unary! You insane or what?".to_string())
+        }
+
+    }
+
     pub fn parse_expr(&mut self, current_precedence: u8) -> Result<Expr, String> {
-        let mut left = self.parse_grouped_expr()?;
+        
+        //first, handle the unary side of things
+        let mut left = match self.peek() {
+            Some(token) => match token.kind {
+                TokenType::PLUS | TokenType::MINUS => self.parse_unary_expr()?,
+                _ => self.parse_group_or_atom()?
+            },
+            None => return Err("Unexpected end of input while parsing expression!".to_string())
+        };
 
         loop {
             let next_token = match self.peek(){
