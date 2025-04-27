@@ -56,7 +56,7 @@ impl Atom {
         match self {
             Atom::LITERAL_INT(val) => val.to_string(),
             Atom::LITERAL_FLOAT(val) => val.to_string(),
-            Atom::LITERAL_STRING(val) => format!("\"{}\"", val),
+            Atom::LITERAL_STRING(val) => format!(r"{}", val),
             Atom::IDENTIFIER(ident) => ident.name.clone(),
         }
     }
@@ -67,7 +67,8 @@ impl Atom {
 #[derive(Debug)]
 pub enum Expr {
     ATOM(Atom),
-    BINARY_OP {
+    GROUPED_EXPR(Box<Expr>),
+    BINARY_EXPR {
         left: Box<Expr>,
         opcode: BinOp,
         right: Box<Expr>,
@@ -77,7 +78,7 @@ pub enum Expr {
 impl Expr {
     pub fn is_operator(&self) -> bool { //used for parser.rs 
         match self {
-            Expr::BINARY_OP{left:_, opcode:_, right:_} => true,
+            Expr::BINARY_EXPR{left:_, opcode:_, right:_} => true,
             _ => false,
         }
     }
@@ -85,7 +86,7 @@ impl Expr {
     pub fn to_pretty_string(&self) -> String {
         match self {
             Expr::ATOM(atom) => atom.to_string(),
-            Expr::BINARY_OP { left, opcode, right } => {
+            Expr::BINARY_EXPR { left, opcode, right } => {
                 format!(
                     "({} {} {})",
                     left.to_pretty_string(),
@@ -93,6 +94,7 @@ impl Expr {
                     right.to_pretty_string()
                 )
             }
+            Expr::GROUPED_EXPR(inner) => format!("({})", inner.to_pretty_string()), 
         }
     }
 }

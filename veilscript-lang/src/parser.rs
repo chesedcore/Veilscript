@@ -92,13 +92,47 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_atom_into_expr(&mut self) -> Result<Expr, String> {
-        let atom = self.parse_atom()?;
-        Ok(Expr::ATOM(atom))
+    pub fn parse_grouped_expr(&mut self) -> Result<Expr, String> { //parses brackets properly
+
+        //look into the next token...
+        match self.peek() {
+            //is it a valid token?
+            //if it is, then...
+            Some(token) => {
+                //what is the token made of?
+                match &token.kind {
+                    //if it's a left parenthesis -> (
+                    TokenType::LPAREN => {
+                        //start parsing the next expression inside it!
+                        self.advance(); //move past the '('
+                        let expr = self.parse_expr(0)?;
+                        //after we find the expr, time to check if the right paren exists...
+                        match self.peek() {
+                            //hit! rparen found!
+                            Some(token) if token.kind == TokenType::RPAREN => {
+                                self.advance(); //get past the rparen 
+                                Ok(Expr::GROUPED_EXPR(Box::new(expr)))
+                            },
+                            //no hit. malformed brackets.
+                            _ => Err("Malformed brackets... no ')' found!".to_string())
+                        }
+                    },
+                    
+                    //anything but the lparen -> proceed normally.
+                    _ => {
+                        let atom = self.parse_atom()?;
+                        Ok(Expr::ATOM(atom))
+                    }
+                }
+            },
+
+            //if not a valid token, error
+            _ => Err("Unexpected end of input!".to_string())
+        }
     }
 
     pub fn parse_expr(&mut self, current_precedence: u8) -> Result<Expr, String> {
-        let mut left = self.parse_atom_into_expr()?;
+        let mut left = self.parse_grouped_expr()?;
 
         loop {
             let next_token = match self.peek(){
@@ -113,7 +147,8 @@ impl<'a> Parser<'a> {
                 TokenType::MINUS => BinOp::SUB,
                 TokenType::SLASH => BinOp::DIV,
                 TokenType::ASTERISK => BinOp::MULT,
-                TokenType::EOF => break,
+                TokenType::EOF | TokenType::RPAREN => break, //break out if the next is EOF or the
+                                                             //end of a grouping (indicated by RPAREN)
                 _ => return Err(format!("Invalid token type detected: {:?} Fix your shit, dumbass.", next_token)),
             };
 
@@ -125,7 +160,7 @@ impl<'a> Parser<'a> {
             self.advance(); //look at the token on the right
             let right = self.parse_expr(precedence+1)?; //recurse lol
 
-            left = Expr::BINARY_OP {
+            left = Expr::BINARY_EXPR {
                 left: Box::new(left),
                 opcode: operator,
                 right: Box::new(right),
