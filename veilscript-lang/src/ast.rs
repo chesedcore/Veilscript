@@ -2,9 +2,12 @@
 //because i'm coming from python and gdscript. enum variants are SCREAMING_SNAKE_CASE AND YOU CAN'T
 //CONVINCE ME OTHERWISE!!! GRRAHHH
 
+use crate::lexer::TokenType;
 
 ///TOKENS, EXPRESSIONS AND IDENTS 
 
+
+///IDENTIFIER section
 //this here is an IDENTIFIER. It serves one purpose: to hold the name to variables and function
 //calls (and more in the future). Right now, it is only a type wrapper around a string, which is
 //fine for the purpose it serves.
@@ -13,6 +16,7 @@ pub struct Ident {
     pub name: String
 }
 
+///OPERATOR section
 //this here is a BINARY OPERATOR enum. It represents these operators: +,-,*,/. Support for more
 //operators is intended to be added in the future, if i can get my lazy ass to push further, lmao 
 #[derive(Debug)]
@@ -56,7 +60,7 @@ impl MonOp {
     }
 }
 
-
+///ATOM section
 //this here is an ATOM enum. It represents the smallest, most indivisible part of the source, and is
 //comprised of a LITERAL (like strings or floats) or an IDENTIFIER(like a variable or function name)
 #[derive(Debug)]
@@ -78,6 +82,7 @@ impl Atom {
     }
 }
 
+///EXPR section
 //this here is an EXPR(expression) enum. It represents either an ATOMIC EXPRESSION (an expression
 //that cannot be divided anymore) or a BINARY OPERATION (like 2+3 or 1-var)
 #[derive(Debug)]
@@ -120,18 +125,32 @@ impl Expr {
     }
 }
 
-///ABSTRACT SYNTAX TREE (AST)
-
-//this here is an AST NODE. when our parser fully finishes parsing our code, it spits out an AST NODE
-//that will be later interpreted and executed. right now, we assume the built tree is syntactically
-//valid.
+///ASSIGNMENT section
+//An assignment assigns the EXPR on the RIGHT into the IDENT on the LEFT
 #[derive(Debug)]
-pub enum Ast {
-    NODE_EXPRESSION(Expr),
+pub struct Assignment {
+    pub ident: Ident,
+    pub type_t: Option<TokenType>, //there may not be a type given! in which case, infer it
+    pub expr: Box<Expr>
 }
 
+///STATEMENT section
+//a statement is a full, higher level constructs that include ASSIGNMENTS, FUNCTION CALLS or
+//CONTROL statements.
 
-
-
-
+#[derive(Debug)]
+pub enum Stmt {
+    STATEMENT_ASSIGNMENT(Assignment),
+    STATEMENT_ZERO_EFFECT,
+}
+impl Stmt {
+    pub fn to_pretty_string(&self) -> String {
+        match self {
+            Stmt::STATEMENT_ZERO_EFFECT => "ZERO-EFFECT".to_string(),
+            Stmt::STATEMENT_ASSIGNMENT(Assignment{ident,type_t, expr}) => {
+                format!("{}:{:?} = {}",ident.name, type_t, expr.to_pretty_string())
+            }
+        }
+    }
+}
 
