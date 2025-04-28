@@ -101,13 +101,6 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn is_operator(&self) -> bool { //used for parser.rs 
-        match self {
-            Expr::BINARY_EXPR{left:_, opcode:_, right:_} => true,
-            _ => false,
-        }
-    }
-
     pub fn to_pretty_string(&self) -> String {
         match self {
             Expr::ATOM(atom) => atom.to_string(),

@@ -109,7 +109,7 @@ pub fn tokenise(source_string: &str) -> Vec<Token> {
         let lexeme = lexer.slice();
         result_vector.push( Token{lexeme, kind} );
     }
-    result_vector.push( Token{lexeme:"--END-OF-FILE--", kind:TokenType::EOF});
+    result_vector.push( Token{lexeme:"STOP", kind:TokenType::EOF});
     result_vector
 }
 

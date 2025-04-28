@@ -1,18 +1,19 @@
 mod lexer;
 mod parser;
 mod ast;
+mod libparse;
 
 use lexer::*;
 use parser::Parser;
 
 fn main() {
     let source = r#"
-    x:int = - 7 + -+3;
+    x = balls;
     "#;
 
     //trial run
     let tokens = tokenise(&source);
-    println!("{}",&source);
+    println!("{}", &source);
     print_tokens_from_string(&source);
     let mut parser = Parser::new(tokens);
     let ast = parser.parse_statement().expect("Something exploded");
