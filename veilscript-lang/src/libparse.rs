@@ -107,13 +107,21 @@ impl<'a> Parser<'a> {
         }
     }
 
+    pub fn parse_scoped_expr(&mut self) -> Result<Expr, String> {
+        match self.parse_scope()? {
+            Stmt::SCOPE(scope) => Ok(Expr::SCOPE(scope)),
+            other => Err(format!("Expected scope, found: {:?}", other))
+        }
+    }
+
     pub fn parse_expr(&mut self, current_precedence: u8) -> Result<Expr, String> {
         
         //first, handle the unary side of things
         let token = self.peek_and_extract()?;
         let mut left = match token.kind {
             TokenType::PLUS | TokenType::MINUS => self.parse_unary_expr()?,
-            _ => self.parse_group_or_atom()?
+            TokenType::LBRACE => self.parse_scoped_expr()?,
+            _ => self.parse_group_or_atom()?,
         };
 
         loop {
@@ -231,10 +239,11 @@ impl<'a> Parser<'a> {
             TokenType::IDENTIFIER => self.parse_assignment()?,
             TokenType::FN => self.parse_function_declaration()?,
             TokenType::RETURN => self.parse_return()?,
+            TokenType::LBRACE => self.parse_scope()?,
             _ => Stmt::STATEMENT_ZERO_EFFECT,
         };
         Ok(statement)
-    } 
+    }
 
     pub fn parse_rhs_expr(&mut self) -> Result<Expr, String> {
         self.check_advance(TokenType::EQUALS)?;
@@ -283,6 +292,20 @@ impl<'a> Parser<'a> {
             _ => return Err("balls".to_string()),
         }
     }
-
+    
+    pub fn parse_scope(&mut self) -> Result<Stmt, String> {
+        let mut stmts: Vec<Stmt> = Vec::new();
+        self.check_advance(TokenType::LBRACE)?;
+        loop {
+            match self.peek_and_extract()?.kind {
+                TokenType::EOF => return Err("Unexpected end of input!".to_string()),
+                TokenType::RBRACE => {
+                    self.advance();
+                    return Ok(Stmt::SCOPE(Scope{stmts}));
+                },
+                _ => stmts.push(self.parse_statement()?),
+            }
+        }
+    }
     
 }

@@ -8,13 +8,19 @@ use parser::Parser;
 
 fn main() {
     let source = r#"
-    return -balls+-2;
+    {
+        cock = balls;
+        balls = -2+2;
+        gonk = {
+            return balls;
+        };
+    }
     "#;
 
     //trial run
     let tokens = tokenise(&source);
     println!("{}", &source);
-    print_tokens_from_string(&source);
+    //print_tokens_from_string(&source);
     let mut parser = Parser::new(tokens);
     let ast = parser.parse_statement().expect("Something exploded");
     let node = ast.to_pretty_string();

@@ -84,7 +84,7 @@ impl Atom {
 
 ///EXPR section
 //this here is an EXPR(expression) enum. It represents either an ATOMIC EXPRESSION (an expression
-//that cannot be divided anymore) or a BINARY OPERATION (like 2+3 or 1-var)
+//that cannot be divided anymore) or a BINARY OPERATION (like 2+3 or 1-var) or a SCOPE
 #[derive(Debug)]
 pub enum Expr {
     ATOM(Atom),
@@ -97,7 +97,8 @@ pub enum Expr {
     UNARY_EXPR {
         opcode: MonOp,
         expr: Box<Expr>
-    }
+    },
+    SCOPE(Scope),
 }
 
 impl Expr {
@@ -114,6 +115,7 @@ impl Expr {
             }
             Expr::GROUPED_EXPR(inner) => format!("({})", inner.to_pretty_string()),
             Expr::UNARY_EXPR{opcode,expr} => format!("({}{})",opcode.to_string(),expr.to_pretty_string()),
+            Expr::SCOPE(scope) => scope.to_pretty_string()
         }
     }
 }
@@ -174,6 +176,7 @@ pub enum Stmt {
     STATEMENT_FUNCTION_DECLARATION(FnDeclaration),
     STATEMENT_ZERO_EFFECT,
     STATEMENT_RETURN(ReturnStmt),
+    SCOPE(Scope)
 }
 
 impl Stmt {
@@ -185,7 +188,24 @@ impl Stmt {
                 format!("{}:{:?} = {}",ident.name, type_t, expr.to_pretty_string())
             },
             Stmt::STATEMENT_RETURN(ret) => ret.expr.to_pretty_string(),
+            Stmt::SCOPE(scope) => scope.to_pretty_string(),
         }
     }
 }
 
+///SCOPE section
+//A SCOPE defines a collective lifetime for all variables defined within itself
+#[derive(Debug)]
+pub struct Scope {
+    pub stmts: Vec<Stmt>
+}
+impl Scope {
+    pub fn to_pretty_string(&self) -> String {
+        let mut ret = String::from("Scope{\n");
+        for stmt in &self.stmts {
+            ret += &format!("{}\n", stmt.to_pretty_string())
+        }
+        ret += "}";
+        ret
+    }
+}
