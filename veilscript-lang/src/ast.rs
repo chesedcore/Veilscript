@@ -158,6 +158,12 @@ impl FnDeclaration {
     }
 }
 
+///RETURN section 
+//do i really need to explain tf this is :sob:
+#[derive(Debug)]
+pub struct ReturnStmt {
+    pub expr: Box<Expr>
+}
 
 ///STATEMENT section
 //a statement is a full, higher level constructs that include ASSIGNMENTS, FUNCTION CALLS or
@@ -167,6 +173,7 @@ pub enum Stmt {
     STATEMENT_ASSIGNMENT(Assignment),
     STATEMENT_FUNCTION_DECLARATION(FnDeclaration),
     STATEMENT_ZERO_EFFECT,
+    STATEMENT_RETURN(ReturnStmt),
 }
 
 impl Stmt {
@@ -176,7 +183,8 @@ impl Stmt {
             Stmt::STATEMENT_FUNCTION_DECLARATION(decl) => decl.to_pretty_string(),
             Stmt::STATEMENT_ASSIGNMENT(Assignment{ident,type_t, expr}) => {
                 format!("{}:{:?} = {}",ident.name, type_t, expr.to_pretty_string())
-            }
+            },
+            Stmt::STATEMENT_RETURN(ret) => ret.expr.to_pretty_string(),
         }
     }
 }

@@ -196,27 +196,32 @@ impl<'a> Parser<'a> {
 
 
     ///MATCHES: FN IDENTIFIER LPAREN Vec<Parameter> RPAREN ARROW TYPE_T       // {scope}
-    pub fn parse_function_declaration(&mut self) -> Result<FnDeclaration, String> {
+    pub fn parse_function_declaration(&mut self) -> Result<Stmt, String> {
         self.check_advance(TokenType::FN)?;
         let ident = self.parse_next_ident()?;
         self.check_advance(TokenType::LPAREN)?;
         let params = self.parse_params()?;
 
         match self.check_next_contains(&[TokenType::LBRACE, TokenType::ARROW])? {
-            TokenType::LBRACE => Ok(FnDeclaration{ident,params,type_t: TokenType::TYPE_VOID}),
+            TokenType::LBRACE => Ok(Stmt::STATEMENT_FUNCTION_DECLARATION(FnDeclaration{ident,params,type_t: TokenType::TYPE_VOID})),
             TokenType::ARROW => {
                 self.advance();
                 let type_t = self.advance_and_extract()?.kind;
-                return Ok(FnDeclaration{ident,params,type_t});
+                return Ok(Stmt::STATEMENT_FUNCTION_DECLARATION(FnDeclaration{ident,params,type_t}));
             },
             _ => Err("".to_string())
         }
     }
-
-
+    
+    pub fn parse_return(&mut self) -> Result<Stmt, String> {
+        self.check_advance(TokenType::RETURN)?;
+        let expr = Box::new(self.parse_full_expr()?);
+        self.check_advance(TokenType::SEMICOLON)?;
+        Ok(Stmt::STATEMENT_RETURN(ReturnStmt{expr}))
+    }
+    
     
     ///FULL PARSER METHODS
-    ///these methods will probably be HUGE. 
     ///these allow the parsing of statements
 
     pub fn parse_statement(&mut self) -> Result<Stmt, String> {
@@ -224,7 +229,8 @@ impl<'a> Parser<'a> {
         
         let statement = match token.kind { //lord save me for this 9000 line match 
             TokenType::IDENTIFIER => self.parse_assignment()?,
-            TokenType::FN => Stmt::STATEMENT_FUNCTION_DECLARATION(self.parse_function_declaration()?),
+            TokenType::FN => self.parse_function_declaration()?,
+            TokenType::RETURN => self.parse_return()?,
             _ => Stmt::STATEMENT_ZERO_EFFECT,
         };
         Ok(statement)

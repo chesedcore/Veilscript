@@ -8,7 +8,7 @@ use parser::Parser;
 
 fn main() {
     let source = r#"
-    main = balls;
+    return -balls+-2;
     "#;
 
     //trial run
