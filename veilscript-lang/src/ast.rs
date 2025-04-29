@@ -127,19 +127,53 @@ pub struct Assignment {
     pub expr: Box<Expr>
 }
 
+///PARAMETER section
+//A parameter dictates an IDENTIFIER associated with a method/function along with its TYPE 
+#[derive(Debug)]
+pub struct Parameter {
+    pub ident: Ident,
+    pub type_t: TokenType, //declaring a type in parameters is an absolute must.
+}
+impl Parameter {
+    pub fn to_pretty_string(params: &[Parameter]) -> String {
+        let mut ret = String::new();
+        for param in params {
+            ret += &format!("[{}: {:?}]", param.ident.name, param.type_t)
+        }
+        ret
+    }
+}
+
+///FUNCTION DECLARATION section
+//a function declaration DECLARES that the next scope is a reusable block of statements 
+#[derive(Debug)]
+pub struct FnDeclaration {
+    pub ident: Ident, 
+    pub type_t: TokenType, //the return type. unassigned implies TYPE_VOID
+    pub params: Vec<Parameter>
+}
+impl FnDeclaration {
+    pub fn to_pretty_string(&self) -> String {
+        format!("{}({}) -> {:?}", self.ident.name, Parameter::to_pretty_string(&self.params), self.type_t)
+    }
+}
+
+
 ///STATEMENT section
 //a statement is a full, higher level constructs that include ASSIGNMENTS, FUNCTION CALLS or
 //CONTROL statements.
-
 #[derive(Debug)]
 pub enum Stmt {
     STATEMENT_ASSIGNMENT(Assignment),
+    STATEMENT_FUNCTION_DECLARATION(FnDeclaration),
     STATEMENT_ZERO_EFFECT,
 }
+
 impl Stmt {
     pub fn to_pretty_string(&self) -> String {
         match self {
             Stmt::STATEMENT_ZERO_EFFECT => "ZERO-EFFECT".to_string(),
+            Stmt::STATEMENT_FUNCTION_DECLARATION(decl) => decl.to_pretty_string(),
             Stmt::STATEMENT_ASSIGNMENT(Assignment{ident,type_t, expr}) => {
                 format!("{}:{:?} = {}",ident.name, type_t, expr.to_pretty_string())
             }

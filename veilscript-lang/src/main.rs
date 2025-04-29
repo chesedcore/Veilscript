@@ -8,7 +8,7 @@ use parser::Parser;
 
 fn main() {
     let source = r#"
-    x = balls;
+    main = balls;
     "#;
 
     //trial run
@@ -18,6 +18,6 @@ fn main() {
     let mut parser = Parser::new(tokens);
     let ast = parser.parse_statement().expect("Something exploded");
     let node = ast.to_pretty_string();
-
+    println!("--parse-results--");
     println!("{}",node);
 }

@@ -4,9 +4,9 @@ use logos::Logos;
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum TokenType {
     //keywords
-    #[token("func")]
+    #[token("fn")]
     #[token("rite")]
-    FUNC,
+    FN,
 
     #[token("return")]
     #[token("ret")]
@@ -39,6 +39,9 @@ pub enum TokenType {
 
     #[token("->")]
     ARROW,
+
+    #[token(",")]
+    COMMA,
 
     #[token(";")]
     SEMICOLON,

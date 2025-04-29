@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
     
     //check if the token thrown into it matches the tokenkind. mostly used as a helper func, dont
     //need to call it.
-    pub fn check_for(comparator: Token, expected: TokenType) -> Result<TokenType,String> {
+    pub fn check_for(comparator: Token, expected: TokenType) -> Result<TokenType, String> {
         if comparator.kind == expected {
             Ok(expected)
         } else {
@@ -65,11 +65,20 @@ impl<'a> Parser<'a> {
         }
     } 
     
-    //checks if the next token is the expected tokentype. good for lookaheads. use this often
+    //checks if the next token is the expected tokentype. good for lookaheads. 
     pub fn check_next(&self, expected: TokenType) -> Result<TokenType, String> {
         Parser::check_for(self.peek_and_extract()?, expected)
     }
     
+    //grouped version of the above. great for lookaheads. use this very often.
+    ///probably used a lot of the time! 
+    ///match check_next_contains(&[balls,cock]) {
+    ///    balls => _ , cock => _,
+    ///}
+    pub fn check_next_contains(&self, expected: &[TokenType]) -> Result<TokenType, String> {
+        Parser::check_contains(self.peek_and_extract()?, expected)
+    }
+
     //checks if the next token is the expected tokentype while stepping forward.
     ///great function, and you will use this all the time.
     ///why is that?:

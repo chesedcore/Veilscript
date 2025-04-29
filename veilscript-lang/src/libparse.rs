@@ -154,6 +154,67 @@ impl<'a> Parser<'a> {
         Ok(self.parse_expr(0)?)
     }
     
+    //grabbing an ident with the helpers in parser.rs is tricky because they return the tokentype,
+    //not the token itself. i made this to make my life a little easier. this advances forward, so
+    //be EXTREMELY sure the next tokentype is for sure syntactically an IDENTIFIER.
+    pub fn parse_next_ident(&mut self) -> Result<Ident, String> {
+        let token = self.advance_and_extract()?;
+        Parser::check_for(token.clone(), TokenType::IDENTIFIER)?;
+        let name = token.lexeme.to_owned();
+        Ok(Ident{name})
+    }
+    
+    ///MATCHES: Vec<Parameter> RPAREN
+    pub fn parse_params(&mut self) -> Result<Vec<Parameter>, String> {
+        let mut params: Vec<Parameter> = Vec::new();
+        
+        //in case there aren't any parameters
+        match self.check_next_contains(&[TokenType::RPAREN, TokenType::IDENTIFIER])? {
+            TokenType::RPAREN => {
+                self.advance();
+                return Ok(params);
+            }
+            _ => {}
+        }
+        
+        //keep getting params
+        loop {
+            let ident = self.parse_next_ident()?;
+            self.check_advance(TokenType::COLON)?;
+            let type_t = self.advance_and_extract()?.kind.clone();
+            params.push(Parameter{
+                ident, type_t
+            });
+            let next = self.check_advance_contains(&[TokenType::COMMA, TokenType::RPAREN])?;
+            if next == TokenType::COMMA {
+                continue;
+            } else {
+                return Ok(params);
+            }
+        }
+    }
+
+
+    ///MATCHES: FN IDENTIFIER LPAREN Vec<Parameter> RPAREN ARROW TYPE_T       // {scope}
+    pub fn parse_function_declaration(&mut self) -> Result<FnDeclaration, String> {
+        self.check_advance(TokenType::FN)?;
+        let ident = self.parse_next_ident()?;
+        self.check_advance(TokenType::LPAREN)?;
+        let params = self.parse_params()?;
+
+        match self.check_next_contains(&[TokenType::LBRACE, TokenType::ARROW])? {
+            TokenType::LBRACE => Ok(FnDeclaration{ident,params,type_t: TokenType::TYPE_VOID}),
+            TokenType::ARROW => {
+                self.advance();
+                let type_t = self.advance_and_extract()?.kind;
+                return Ok(FnDeclaration{ident,params,type_t});
+            },
+            _ => Err("".to_string())
+        }
+    }
+
+
+    
     ///FULL PARSER METHODS
     ///these methods will probably be HUGE. 
     ///these allow the parsing of statements
@@ -162,7 +223,8 @@ impl<'a> Parser<'a> {
         let token = self.peek_and_extract()?;
         
         let statement = match token.kind { //lord save me for this 9000 line match 
-            TokenType::IDENTIFIER => self.parse_assignment()?, //1..=3
+            TokenType::IDENTIFIER => self.parse_assignment()?,
+            TokenType::FN => Stmt::STATEMENT_FUNCTION_DECLARATION(self.parse_function_declaration()?),
             _ => Stmt::STATEMENT_ZERO_EFFECT,
         };
         Ok(statement)
@@ -176,9 +238,8 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_assignment(&mut self) -> Result<Stmt, String> {
-        let ident_token = self.peek_and_extract()?;
+        let ident_token = self.advance_and_extract()?;
         let name = ident_token.lexeme.to_owned();
-        self.advance(); //move past the IDENT tokens
 
         let intermediate_token = self.advance_and_extract()?;
 
