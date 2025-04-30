@@ -9,7 +9,11 @@ use parser::Parser;
 fn main() {
     let source = r#"
     {
-        x = -2*balls()+2;
+        {
+            {
+                {}
+            }
+        }
     }
     "#;
 

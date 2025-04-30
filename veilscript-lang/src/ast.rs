@@ -223,11 +223,29 @@ pub struct Scope {
 }
 impl Scope {
     pub fn to_pretty_string(&self) -> String {
-        let mut ret = String::from("Scope{\n");
+        self.to_pretty_string_with_indent(0)
+    }
+
+    fn to_pretty_string_with_indent(&self, indent_level: usize) -> String {
+        let indent = "   ".repeat(indent_level);
+        let mut ret = format!("{indent}Scope{{\n");
+
         for stmt in &self.stmts {
-            ret += &format!("{}\n", stmt.to_pretty_string())
+            match stmt {
+                Stmt::SCOPE(scope) => {
+                    //recurse with deeper indent
+                    ret += &scope.to_pretty_string_with_indent(indent_level + 1);
+                },
+                _ => {
+                    //just recurse lol
+                    let stmt_str = stmt.to_pretty_string();
+                    ret += &format!("{}   {}\n", indent, stmt_str);
+                }
+            }
         }
-        ret += "}";
+
+        ret += &format!("{indent}}}\n");
         ret
     }
 }
+
