@@ -113,22 +113,59 @@ impl<'a> Parser<'a> {
             other => Err(format!("Expected scope, found: {:?}", other))
         }
     }
+    
+    ///MATCHES: LPAREN [Expr COMMA]* RPAREN
+    pub fn parse_args(&mut self) -> Result<Vec<Expr>, String> {
+        self.check_advance(TokenType::LPAREN)?;
+        let mut exprs: Vec<Expr> = Vec::new();
+        loop {
+            match self.peek_and_extract()?.kind {
+                TokenType::RPAREN => {
+                    self.advance();
+                    return Ok(exprs);
+                },
+                TokenType::COMMA => { self.advance(); }
+                _ => {exprs.push(self.parse_full_expr()?);}
+            }
+        }
+    }
+
+    pub fn parse_fn_or_group(&mut self) -> Result<Expr, String> {
+        let expr = self.parse_group_or_atom()?;
+        match expr {
+            //a function call could POTENTIALLY happen here
+            Expr::ATOM(Atom::IDENTIFIER(ref id)) => {
+                //IDENTIFIER MATCH section
+                match self.peek_and_extract()?.kind {
+
+                    //identifier(args)
+                    TokenType::LPAREN => {
+                        let args = Box::new(self.parse_args()?);
+                        let fncall = Expr::FUNCTION_CALL(FnCall{
+                            ident: id.clone(), args
+                        });
+                        return Ok(fncall);
+                    },
+                    _ => {return Ok(expr);}
+                }
+            }, 
+            _ => {return Ok(expr);}
+        }
+    }
 
     pub fn parse_expr(&mut self, current_precedence: u8) -> Result<Expr, String> {
         
-        //first, handle the unary side of things
+        //handle the possible 9000 clusterfucks a small group can extend into
         let token = self.peek_and_extract()?;
         let mut left = match token.kind {
             TokenType::PLUS | TokenType::MINUS => self.parse_unary_expr()?,
             TokenType::LBRACE => self.parse_scoped_expr()?,
-            _ => self.parse_group_or_atom()?,
+            _ => self.parse_fn_or_group()?,
         };
 
         loop {
-            let next_token = self.peek_and_extract()?;
-            let next_token_type =  &next_token.kind;
-            
-            let operator = match next_token_type {
+
+            let operator = match self.peek_and_extract()?.kind {
                 TokenType::PLUS => BinOp::ADD,
                 TokenType::MINUS => BinOp::SUB,
                 TokenType::SLASH => BinOp::DIV,
@@ -137,7 +174,7 @@ impl<'a> Parser<'a> {
                             | TokenType::SEMICOLON  => break, //break out if the next is EOF or the
                                                               //end of a grouping (indicated by RPAREN)
                                                               //or a semicolon (end of statement) 
-                _ => return Err(format!("Invalid token type detected: {:?} Fix your shit, dumbass.", next_token)),
+                _ => return Err(format!("Invalid token type detected! Fix your shit, dumbass.")),
             };
 
             let precedence = operator.get_precedence();

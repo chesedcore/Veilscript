@@ -11,7 +11,7 @@ use crate::lexer::TokenType;
 //this here is an IDENTIFIER. It serves one purpose: to hold the name to variables and function
 //calls (and more in the future). Right now, it is only a type wrapper around a string, which is
 //fine for the purpose it serves.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ident {
     pub name: String
 }
@@ -82,6 +82,26 @@ impl Atom {
     }
 }
 
+///FN CALL section 
+//my ass is NOT explaining this 
+#[derive(Debug)]
+pub struct FnCall {
+    pub ident: Ident,
+    pub args: Box<Vec<Expr>>
+}
+
+impl FnCall {
+    pub fn to_pretty_string(&self) -> String {
+        let mut ret = String::from(&self.ident.name);
+        ret += "(";
+        for arg in self.args.as_ref() {
+            ret += &format!("[{}]", arg.to_pretty_string());
+        }
+        ret += ")";
+        ret
+    }
+}
+
 ///EXPR section
 //this here is an EXPR(expression) enum. It represents either an ATOMIC EXPRESSION (an expression
 //that cannot be divided anymore) or a BINARY OPERATION (like 2+3 or 1-var) or a SCOPE
@@ -99,6 +119,7 @@ pub enum Expr {
         expr: Box<Expr>
     },
     SCOPE(Scope),
+    FUNCTION_CALL(FnCall),
 }
 
 impl Expr {
@@ -115,7 +136,8 @@ impl Expr {
             }
             Expr::GROUPED_EXPR(inner) => format!("({})", inner.to_pretty_string()),
             Expr::UNARY_EXPR{opcode,expr} => format!("({}{})",opcode.to_string(),expr.to_pretty_string()),
-            Expr::SCOPE(scope) => scope.to_pretty_string()
+            Expr::SCOPE(scope) => scope.to_pretty_string(),
+            Expr::FUNCTION_CALL(fncall) => fncall.to_pretty_string(),
         }
     }
 }

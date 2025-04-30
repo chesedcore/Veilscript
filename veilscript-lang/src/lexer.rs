@@ -37,6 +37,12 @@ pub enum TokenType {
     #[token(":")]
     COLON,
 
+    #[token("::")]
+    DOUBLE_COLON,
+
+    #[token(".")]
+    DOT,
+
     #[token("->")]
     ARROW,
 

@@ -9,11 +9,7 @@ use parser::Parser;
 fn main() {
     let source = r#"
     {
-        cock = balls;
-        balls = -2+2;
-        gonk = {
-            return balls;
-        };
+        x = -2*balls()+2;
     }
     "#;
 
