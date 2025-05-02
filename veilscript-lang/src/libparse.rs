@@ -106,7 +106,10 @@ impl<'a> Parser<'a> {
             _ => Err("Not a valid unary! You insane or what?".to_string())
         }
     }
-
+    
+    ///MATCHES: LBRACE Vec<Stmt> RBRACE                    <-- this is different from parse_scope()
+    ///                                                        because it spits out an expression instead 
+    ///                                                        of a standalone statement.
     pub fn parse_scoped_expr(&mut self) -> Result<Expr, String> {
         match self.parse_scope()? {
             Stmt::SCOPE(scope) => Ok(Expr::SCOPE(scope)),
@@ -114,9 +117,9 @@ impl<'a> Parser<'a> {
         }
     }
     
-    ///MATCHES: LPAREN [Expr COMMA]* RPAREN
+    ///MATCHES: (LPAREN) [Expr COMMA]* RPAREN
     pub fn parse_args(&mut self) -> Result<Vec<Expr>, String> {
-        self.check_advance(TokenType::LPAREN)?;
+        //self.check_advance(TokenType::LPAREN)?;
         let mut exprs: Vec<Expr> = Vec::new();
         loop {
             match self.peek_and_extract()?.kind {
@@ -130,6 +133,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    ///MATCHES: IDENTIFIER LPAREN Vec<Expr> RPAREN 
     pub fn parse_fn_or_group(&mut self) -> Result<Expr, String> {
         let expr = self.parse_group_or_atom()?;
         match expr {
@@ -140,6 +144,7 @@ impl<'a> Parser<'a> {
 
                     //identifier(args)
                     TokenType::LPAREN => {
+                        self.advance(); //head past the lparen
                         let args = Box::new(self.parse_args()?);
                         let fncall = Expr::FUNCTION_CALL(FnCall{
                             ident: id.clone(), args
@@ -273,7 +278,7 @@ impl<'a> Parser<'a> {
         let token = self.peek_and_extract()?;
         
         let statement = match token.kind { //lord save me for this 9000 line match 
-            TokenType::IDENTIFIER => self.parse_assignment()?,
+            TokenType::IDENTIFIER => self.parse_assignment_or_fn()?,
             TokenType::FN => self.parse_function_declaration()?,
             TokenType::RETURN => self.parse_return()?,
             TokenType::LBRACE => self.parse_scope()?,
@@ -289,13 +294,10 @@ impl<'a> Parser<'a> {
         Ok(rhs)
     }
 
-    pub fn parse_assignment(&mut self) -> Result<Stmt, String> {
-        let ident_token = self.advance_and_extract()?;
-        let name = ident_token.lexeme.to_owned();
+    pub fn parse_assignment_or_fn(&mut self) -> Result<Stmt, String> {
+        let ident = self.parse_next_ident()?;
 
-        let intermediate_token = self.advance_and_extract()?;
-
-        match intermediate_token.kind {
+        match self.advance_and_extract()?.kind {
             
             TokenType::SEMICOLON => {
                 Ok(Stmt::STATEMENT_ZERO_EFFECT)
@@ -310,7 +312,7 @@ impl<'a> Parser<'a> {
                 let type_t = Some(type_token.kind.clone()); //grab tokentype
                 let expr = Box::new(self.parse_rhs_expr()?); //grab expr
                 Ok(Stmt::STATEMENT_ASSIGNMENT(
-                        Assignment{ ident: Ident{name}, type_t, expr }
+                        Assignment{ ident, type_t, expr }
                 ))
             },
 
@@ -322,9 +324,21 @@ impl<'a> Parser<'a> {
                 let expr = Box::new(self.parse_full_expr()?);
                 self.check_advance(TokenType::SEMICOLON)?;
                 Ok(Stmt::STATEMENT_ASSIGNMENT(
-                        Assignment{ ident: Ident{name}, type_t: None, expr }
+                        Assignment{ ident, type_t: None, expr }
                 ))
-            }
+            },
+
+            TokenType::LPAREN => {
+
+                ///MATCHED: (IDENT) LPAREN Vec<Expr> RPAREN [EQUALS Expr];
+                ///
+
+                let args = Box::new(self.parse_args()?);
+                self.check_advance(TokenType::SEMICOLON)?;
+                Ok(Stmt::STATEMENT_FUNCTION_CALL(FnCall{
+                    ident, args
+                }))
+            },
 
             _ => return Err("balls".to_string()),
         }

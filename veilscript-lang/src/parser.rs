@@ -66,9 +66,9 @@ impl<'a> Parser<'a> {
     } 
     
     //checks if the next token is the expected tokentype. good for lookaheads. 
-    pub fn check_next(&self, expected: TokenType) -> Result<TokenType, String> {
-        Parser::check_for(self.peek_and_extract()?, expected)
-    }
+    //pub fn check_next(&self, expected: TokenType) -> Result<TokenType, String> {
+    //    Parser::check_for(self.peek_and_extract()?, expected)
+    //}
     
     //grouped version of the above. great for lookaheads. use this very often.
     ///probably used a lot of the time! 

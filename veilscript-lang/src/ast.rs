@@ -198,6 +198,7 @@ pub enum Stmt {
     STATEMENT_FUNCTION_DECLARATION(FnDeclaration),
     STATEMENT_ZERO_EFFECT,
     STATEMENT_RETURN(ReturnStmt),
+    STATEMENT_FUNCTION_CALL(FnCall),
     SCOPE(Scope)
 }
 
@@ -211,6 +212,7 @@ impl Stmt {
             },
             Stmt::STATEMENT_RETURN(ret) => ret.expr.to_pretty_string(),
             Stmt::SCOPE(scope) => scope.to_pretty_string(),
+            Stmt::STATEMENT_FUNCTION_CALL(fncall) => fncall.to_pretty_string(),
         }
     }
 }
