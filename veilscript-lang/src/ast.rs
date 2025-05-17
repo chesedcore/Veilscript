@@ -102,6 +102,34 @@ impl FnCall {
     }
 }
 
+///METHOD CALL section
+//a function associated with a struct. what the fuck else???
+#[derive(Debug)]
+pub struct MethodCall {
+    pub base: Box<Expr>,
+    pub call: FnCall
+}
+
+impl MethodCall {
+    pub fn to_pretty_string(&self) -> String {
+        format!("{}.{}", &self.base.to_pretty_string(), &self.call.to_pretty_string())
+    }
+}
+
+///FIELD ACCESS section 
+//accessing an ident associated with a struct. 
+#[derive(Debug)]
+pub struct FieldAccess {
+    pub base: Box<Expr>,
+    pub access: Ident
+}
+
+impl FieldAccess {
+    pub fn to_pretty_string(&self) -> String {
+        format!("{}.{}", &self.base.to_pretty_string(), &self.access.name)
+    }
+}
+
 ///EXPR section
 //this here is an EXPR(expression) enum. It represents either an ATOMIC EXPRESSION (an expression
 //that cannot be divided anymore) or a BINARY OPERATION (like 2+3 or 1-var) or a SCOPE
@@ -120,6 +148,8 @@ pub enum Expr {
     },
     SCOPE(Scope),
     FUNCTION_CALL(FnCall),
+    METHOD_CALL(MethodCall),
+    FIELD_ACCESS(FieldAccess),
 }
 
 impl Expr {
@@ -138,6 +168,7 @@ impl Expr {
             Expr::UNARY_EXPR{opcode,expr} => format!("({}{})",opcode.to_string(),expr.to_pretty_string()),
             Expr::SCOPE(scope) => scope.to_pretty_string(),
             Expr::FUNCTION_CALL(fncall) => fncall.to_pretty_string(),
+            _ => format!("")
         }
     }
 }
@@ -223,6 +254,7 @@ impl Stmt {
 pub struct Scope {
     pub stmts: Vec<Stmt>
 }
+
 impl Scope {
     pub fn to_pretty_string(&self) -> String {
         self.to_pretty_string_with_indent(0)

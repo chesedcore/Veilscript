@@ -9,11 +9,8 @@ use parser::Parser;
 fn main() {
     let source = r#"
     {
-        {
-            {
-                {balls();}
-            }
-        }
+        balls = 2;
+        cock: int = balls;
     }
     "#;
 

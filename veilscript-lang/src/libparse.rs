@@ -93,14 +93,14 @@ impl<'a> Parser<'a> {
         let token = self.peek_and_extract()?;
         match token.kind { 
             TokenType::PLUS | TokenType::MINUS => {
-                let op = if token.kind == TokenType::PLUS {MonOp::POS} else {MonOp::NEG};
+                let opcode = if token.kind == TokenType::PLUS {MonOp::POS} else {MonOp::NEG};
                 self.advance(); //move past the unary
 
                 //grab the next expr 
-                let expr = self.parse_expr(op.get_precedence()+1)?;
+                let expr = Box::new(self.parse_expr(opcode.get_precedence()+1)?);
                 Ok(Expr::UNARY_EXPR{
-                    opcode: op,
-                    expr: Box::new(expr)
+                    opcode,
+                    expr
                 })
             },
             _ => Err("Not a valid unary! You insane or what?".to_string())
@@ -331,7 +331,7 @@ impl<'a> Parser<'a> {
             TokenType::LPAREN => {
 
                 ///MATCHED: (IDENT) LPAREN Vec<Expr> RPAREN [EQUALS Expr];
-                ///
+                ///            balls  (     2,2        )      [= expr]
 
                 let args = Box::new(self.parse_args()?);
                 self.check_advance(TokenType::SEMICOLON)?;
